@@ -25,7 +25,7 @@ VirtualMotionCaptureはキャリブレーション後に身長に合わせるた
 チェックを入れるとカメラ位置を本来の位置（SpoutCameraのみ）に戻し、アバターそのもののサイズを調整します。
 
 ・Display Dummy Floor
-VirtuaｌMotionCapture内に床を表示します。SpoutCameraには映りません。
+VirtualMotionCapture内に床を表示します。SpoutCameraには映りません。
 
 ・Height Adjust Offset
 こちらもキャリブレーション前に調整してください。
