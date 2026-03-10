@@ -19,18 +19,18 @@ Avatar Changeボタンを押して、事前にVRC用Projectから出力したア
 ### 設定
 <img width="253" height="416" alt="image" src="https://github.com/user-attachments/assets/a349c209-844a-4457-8388-c488e90cc50a" />  
 
-・Avatar Self Scaling(SpoutCamera)
+・Avatar Self Scaling(SpoutCamera)  
 VirtualMotionCaptureはキャリブレーション後に身長に合わせるためにカメラの位置を実際の位置よりアバターに近づきます。  
 そのためBeatSaberでカメラに寄るとカメラ位置より手前でアバターが消失するため、
 チェックを入れるとカメラ位置を本来の位置（SpoutCameraのみ）に戻し、アバターそのもののサイズを調整します。
-
-・Display Dummy Floor
+  
+・Display Dummy Floor  
 VirtualMotionCapture内に床を表示します。SpoutCameraには映りません。
-
-・Height Adjust Offset
+  
+・Height Adjust Offset  
 こちらもキャリブレーション前に調整してください。
 元のVRMと靴やヒールの高さが異なる場合に調整します。
-
-・Blendshape Sync Mesh
+  
+・Blendshape Sync Mesh  
 チェックを入れたVRMアバターにあるMeshのシェイプキーを、ロードしたVRCアバターで同期します。
 基本的には顔メッシュ（Body）にチェックをいれて使用します。
