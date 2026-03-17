@@ -7,6 +7,7 @@ using UnityEngine.Animations;
 using VMC;
 using VMCMod;
 using VRM;
+using System.Threading.Tasks;
 
 namespace VMCReplaceAvatar
 {
@@ -23,8 +24,12 @@ namespace VMCReplaceAvatar
         private VRMAvatarMeshSetting _currentAvatarMeshSetting;
         private GameObject _currentVRMModel = null;
         private GameObject _loadedAvatarModel = null;
-        private GameObject _initialPose = null;
+        private GameObject _vrmInitialPose = null;
+        private GameObject _avatarInitialPose = null;
         private GameObject _rootObject = null;
+
+        private GameObject _scaleSyncTarget = null;
+
         private string _currentModelName = string.Empty;
         private const int AvatarLayer = 3;
 
@@ -51,15 +56,14 @@ namespace VMCReplaceAvatar
             _floorObject.transform.rotation = Quaternion.identity;
             _floorObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
             _floorObject.SetActive(_floorDispay);
-
         }
 
         private void OnDestroy()
         {
             VMCEvents.OnModelLoaded -= OnModelLoaded;
-
             SaveSetting();
         }
+
 
         private void LoadSetting()
         {
@@ -110,8 +114,20 @@ namespace VMCReplaceAvatar
 
         private void OnModelLoaded(GameObject currentModel)
         {
+            if(_vrmInitialPose != null)
+            {
+                Destroy(_vrmInitialPose);
+                _vrmInitialPose = null;
+            }
+
+            if (_scaleSyncTarget == null)
+                _scaleSyncTarget = GameObject.Find("HandTrackerRoot");
+
             if (_rootObject != null)
+            {
                 Destroy(_rootObject);
+                _rootObject = null;
+            }
 
             _currentVRMModel = currentModel;
             _currentModelName = currentModel.GetComponent<VRMMeta>().Meta.Title;
@@ -119,7 +135,9 @@ namespace VMCReplaceAvatar
             //VRM初期ポーズを複製
             Animator vrmAnimator = _currentVRMModel.GetComponent<Animator>();
             _vrmArmature = vrmAnimator.GetBoneTransform(HumanBodyBones.Hips).parent.gameObject;
-            _initialPose = Instantiate(_vrmArmature, _vrmArmature.transform.position, _vrmArmature.transform.rotation);
+
+            _vrmInitialPose = InstantiateArmature(currentModel, "VRM Initial Pose");
+            
 
             Debug.Log("Model Loaded: " + _currentModelName);
 
@@ -147,6 +165,30 @@ namespace VMCReplaceAvatar
             }
         }
 
+        private GameObject InstantiateArmature(GameObject armatureObject,string objectName)
+        {
+            var retObj = Instantiate(armatureObject, armatureObject.transform.position, armatureObject.transform.rotation);
+            retObj.name = objectName;
+            Renderer[] renderers = retObj.GetComponentsInChildren<Renderer>(true);
+            foreach (var renderer in renderers)
+                Destroy(renderer.gameObject);
+
+            var comps = retObj.GetComponentsInChildren<Behaviour>(true);
+            var exclusionList = new string[] { "Animator" };
+            foreach (var comp in comps)
+            {
+                if(comp != null)
+                {
+                    foreach (string d in exclusionList)
+                    {
+                        if (!comp.GetType().Name.ToLower().Contains(d.ToLower()))
+                            GameObject.Destroy(comp);
+                    }
+                }
+            }
+            return retObj;
+        }
+
 
         private void Update()
         {
@@ -163,6 +205,9 @@ namespace VMCReplaceAvatar
 
             if (avatarPath != null)
             {
+                if (_scaleSyncTarget == null)
+                    _scaleSyncTarget = GameObject.Find("HandTrackerRoot");
+
                 if (_rootObject != null)
                     Destroy(_rootObject);
 
@@ -184,21 +229,28 @@ namespace VMCReplaceAvatar
                 if (avatar != null)
                 {
                     if (_loadedAvatarModel != null)
-                        DestroyImmediate(_loadedAvatarModel);
+                        Destroy(_loadedAvatarModel);
+
+                    if(_avatarInitialPose != null)
+                        Destroy(_avatarInitialPose);
 
                     _loadedAvatarModel = Instantiate(avatar, _currentVRMModel.transform.position, _currentVRMModel.transform.rotation);
                     _loadedAvatarModel.transform.localScale = _currentVRMModel.transform.localScale;
+
+                    //Avatar初期ポーズを複製
+                    _avatarInitialPose = InstantiateArmature(_loadedAvatarModel, "Avatar Initial Pose");
+
                     _loadedAvatarModel.transform.SetParent(_rootObject.transform);
 
                     _avatarRootConstraintScaleSync = _loadedAvatarModel.AddComponent<PositionConstraintScaleSync>();
                     _avatarRootConstraintScaleSync.TargetConstraintObject = _currentVRMModel;
-                    _avatarRootConstraintScaleSync.TargetScaleReferenceObject = GameObject.Find("HandTrackerRoot");
+                    _avatarRootConstraintScaleSync.TargetScaleReferenceObject = _scaleSyncTarget;
                     _avatarRootConstraintScaleSync.config = _config;
                     _avatarRootConstraintScaleSync.IsLocal = false;
 
                     var armature = _loadedAvatarModel.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Hips).parent.gameObject.AddComponent<PositionConstraintScaleSync>();
                     armature.TargetConstraintObject = _currentVRMModel.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Hips).parent.gameObject;
-                    armature.TargetScaleReferenceObject = GameObject.Find("HandTrackerRoot");
+                    armature.TargetScaleReferenceObject = _scaleSyncTarget;
                     armature.IsLocal = true;
 
                     Renderer[] newRenderers = _loadedAvatarModel.GetComponentsInChildren<Renderer>(true);
@@ -210,6 +262,8 @@ namespace VMCReplaceAvatar
                             SetBlendshapeSync();
                         }
                     }
+
+
 
                     //VRM Mesh非表示
                     Renderer[] vrmRenderers = _currentVRMModel.GetComponentsInChildren<Renderer>(true);
@@ -261,7 +315,7 @@ namespace VMCReplaceAvatar
 
                                     var pos = avatarBone.gameObject.AddComponent<PositionConstraintScaleSync>();
                                     pos.TargetConstraintObject = vrmBone.gameObject;
-                                    pos.TargetScaleReferenceObject = GameObject.Find("HandTrackerRoot");
+                                    pos.TargetScaleReferenceObject = _scaleSyncTarget;
                                 }
                             }
                         }
