@@ -37,6 +37,8 @@ namespace VMCReplaceAvatar
         private const int AvatarLayer = 3;
 
         private Vector2 _scrollPosition = Vector2.zero;
+        private Vector2 _skinnedMeshScrollPosition = Vector2.zero;
+        private int _selectedSkinnedMeshToggle = 0;
 
         private ScaleSync _rootSync = null;
         private PositionConstraintScaleSync _avatarRootConstraintScaleSync = null;
@@ -371,7 +373,7 @@ namespace VMCReplaceAvatar
                 using (new GUILayout.HorizontalScope())
                 {
                     GUILayout.FlexibleSpace();
-                    using (new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(240), GUILayout.Height(400)))
+                    using (new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(240), GUILayout.Height(600)))
                     {
                         _config.avatarSelfScaling = GUILayout.Toggle(_config.avatarSelfScaling, "Avatar Self Scaling");
 
@@ -410,7 +412,36 @@ namespace VMCReplaceAvatar
                         offset = Mathf.Clamp(offset, -0.5f, 0.5f);
                         if (offset != _vrmArmature.transform.localPosition.y)
                             _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, offset, _vrmArmature.transform.localPosition.z);
+                        if(_avatarModel != null)
+                        {
+                            GUILayout.Space(5);
+                            using (new GUILayout.VerticalScope(GUI.skin.box))
+                            {
+                                var meshes = _avatarModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
 
+                                using (new GUILayout.HorizontalScope())
+                                {
+                                    GUILayout.Label("Select footwear");
+                                    if (GUILayout.Button("Adjust"))
+                                    {
+                                        var offsetValue = GetFloorHeight(meshes[_selectedSkinnedMeshToggle].gameObject);
+                                        offsetValue = Mathf.Clamp(offsetValue, -0.5f, 0.5f);
+
+                                        Debug.Log($"Selected Mesh : {meshes[_selectedSkinnedMeshToggle].gameObject.name} / Offset Value : {offsetValue}");
+                                        _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -offsetValue, _vrmArmature.transform.localPosition.z);
+                                    }
+                                }
+                                _skinnedMeshScrollPosition = GUILayout.BeginScrollView(_skinnedMeshScrollPosition);
+                                var toggleCount = 0;
+                                foreach (var mesh in meshes)
+                                {
+                                    if (GUILayout.Toggle(_selectedSkinnedMeshToggle == toggleCount, mesh.name))
+                                        _selectedSkinnedMeshToggle = toggleCount;
+                                    toggleCount++;
+                                }
+                                GUILayout.EndScrollView();
+                            }
+                        }
 
                         GUILayout.Space(10);
 
