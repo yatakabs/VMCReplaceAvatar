@@ -9,7 +9,7 @@ BeatSaber用アバターとして使用することを想定しています。
 ・AvatarExporter(アバターデータ出力用)  
 [AvatarExporter]
 
-・VMC Sport（VMCMod）
+・VMC Sport（VMCMod）  
 [https://github.com/Snow1226/VMCSpout](https://github.com/Snow1226/VMCSpout)  
 
 ### 使い方  
