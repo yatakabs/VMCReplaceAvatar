@@ -1,13 +1,14 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Animations;
 using VMC;
 using VMCMod;
 using VRM;
-using System.Threading.Tasks;
 
 namespace VMCReplaceAvatar
 {
@@ -25,7 +26,6 @@ namespace VMCReplaceAvatar
         private GameObject _currentVRMModel = null;
         private GameObject _loadedAvatarModel = null;
         private GameObject _vrmInitialPose = null;
-        private GameObject _avatarInitialPose = null;
         private GameObject _rootObject = null;
 
         private GameObject _scaleSyncTarget = null;
@@ -231,14 +231,8 @@ namespace VMCReplaceAvatar
                     if (_loadedAvatarModel != null)
                         Destroy(_loadedAvatarModel);
 
-                    if(_avatarInitialPose != null)
-                        Destroy(_avatarInitialPose);
-
                     _loadedAvatarModel = Instantiate(avatar, _currentVRMModel.transform.position, _currentVRMModel.transform.rotation);
                     _loadedAvatarModel.transform.localScale = _currentVRMModel.transform.localScale;
-
-                    //Avatar初期ポーズを複製
-                    _avatarInitialPose = InstantiateArmature(_loadedAvatarModel, "Avatar Initial Pose");
 
                     _loadedAvatarModel.transform.SetParent(_rootObject.transform);
 
@@ -263,7 +257,12 @@ namespace VMCReplaceAvatar
                         }
                     }
 
-
+                    //床面調整
+                    if (_vrmArmature != null)
+                    {
+                        var floorHeight = GetFloorHeight(_loadedAvatarModel);
+                        _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -floorHeight, _vrmArmature.transform.localPosition.z);
+                    }
 
                     //VRM Mesh非表示
                     Renderer[] vrmRenderers = _currentVRMModel.GetComponentsInChildren<Renderer>(true);
@@ -323,6 +322,23 @@ namespace VMCReplaceAvatar
                 }
             }
 
+        }
+
+        private float GetFloorHeight(GameObject avatar)
+        {
+            float floorHeight = float.MaxValue;
+            SkinnedMeshRenderer[] skinnedMeshRenderers = avatar.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            foreach (var renderer in skinnedMeshRenderers)
+            {
+                Vector3[] vertices = renderer.sharedMesh.vertices;
+                List<Vector3> worldVertices = new List<Vector3>();
+                foreach (var vertex in vertices)
+                    worldVertices.Add(renderer.gameObject.transform.TransformPoint(vertex));
+                var min = worldVertices.Min(m => m.y);
+                if (min < floorHeight)
+                    floorHeight = min;
+            }
+            return floorHeight;
         }
 
         private void OnGUI()

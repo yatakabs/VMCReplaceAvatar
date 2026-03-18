@@ -87,9 +87,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlendShapeSync.cs" />
+    <Compile Include="BoneConstraint.cs" />
     <Compile Include="PositionConstraintScaleSync.cs" />
     <Compile Include="ReplaceAvatar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RestPose.cs" />
     <Compile Include="ScaleSync.cs" />
     <Compile Include="SelfScaling.cs" />
     <Compile Include="Config.cs" />
