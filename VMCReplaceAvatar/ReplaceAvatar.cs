@@ -14,7 +14,7 @@ namespace VMCReplaceAvatar
 {
     [VMCPlugin(
     Name: "VMC Replace Avatar",
-    Version: "0.0.1",
+    Version: "0.1.0",
     Author: "snow",
     Description: "VRMを別のアバターモデルで置き換えるMod",
     AuthorURL: "https://twitter.com/snow_mil",
@@ -563,6 +563,7 @@ namespace VMCReplaceAvatar
                             GUILayout.EndScrollView();
                         }
                     }
+
                 }
                 GUILayout.EndArea();
             }
