@@ -14,11 +14,11 @@ namespace VMCReplaceAvatar
 {
     [VMCPlugin(
     Name: "VMC Replace Avatar",
-    Version: "0.1.0",
+    Version: "0.1.1",
     Author: "snow",
     Description: "VRMを別のアバターモデルで置き換えるMod",
     AuthorURL: "https://twitter.com/snow_mil",
-    PluginURL: "https://github.com/Snow1226")]
+    PluginURL: "https://github.com/Snow1226/VMCReplaceAvatar")]
     public class ReplaceAvatar : MonoBehaviour
     {
         private Config _config;
@@ -239,7 +239,12 @@ namespace VMCReplaceAvatar
             }
         }
 
-
+        private void LateUpdate()
+        {
+            if(_vrmModel != null && _scaleSyncTarget != null)
+                if(_scaleSyncTarget.transform.localScale != Vector3.zero)
+                    AfterApplyMotion(_vrmModel);
+        }
 
         private void OnModelLoaded(GameObject currentModel)
         {
@@ -303,6 +308,7 @@ namespace VMCReplaceAvatar
             var retObj = Instantiate(armatureObject, armatureObject.transform.position, armatureObject.transform.rotation);
             retObj.name = objectName;
 
+            /*
             Renderer[] renderers = retObj.GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in renderers)
             {
@@ -329,6 +335,7 @@ namespace VMCReplaceAvatar
                     Debug.LogError($"Component Destroy Error : {comp.gameObject.name} - {comp.GetType().Name} / {ex.Message}");
                 }
             }
+            */
             return retObj;
         }
 
