@@ -354,6 +354,10 @@ namespace VMCReplaceAvatar
                     renderer.enabled = !renderer.enabled;
                 }
             }
+            if(Input.GetKeyDown(KeyCode.Tab))
+            {
+                _displayUI = !_displayUI;
+            }
         }
 
         private void LoadAvatar()
@@ -636,7 +640,14 @@ namespace VMCReplaceAvatar
                                 }
                             }
                         }
-
+                        GUILayout.Space(10);
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            _config.DisplayUIatStartup = GUILayout.Toggle(_config.DisplayUIatStartup, "Display UI at Startup");
+                            if (GUILayout.Button("x", GUILayout.Width(60))){
+                                _displayUI = false;
+                            }
+                        }
                     }
                 }
                 GUILayout.EndArea();
