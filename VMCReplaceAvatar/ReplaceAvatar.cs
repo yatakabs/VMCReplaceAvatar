@@ -31,6 +31,7 @@ namespace VMCReplaceAvatar
 
         private GameObject _avatarModel = null;
         private GameObject _rootObject = null;
+        private string _avatarFileName;
 
         private GameObject _scaleSyncTarget = null;
 
@@ -308,7 +309,6 @@ namespace VMCReplaceAvatar
             var retObj = Instantiate(armatureObject, armatureObject.transform.position, armatureObject.transform.rotation);
             retObj.name = objectName;
 
-            /*
             Renderer[] renderers = retObj.GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in renderers)
             {
@@ -335,7 +335,6 @@ namespace VMCReplaceAvatar
                     Debug.LogError($"Component Destroy Error : {comp.gameObject.name} - {comp.GetType().Name} / {ex.Message}");
                 }
             }
-            */
             return retObj;
         }
 
@@ -363,6 +362,8 @@ namespace VMCReplaceAvatar
 
             if (avatarPath != null)
             {
+                _avatarFileName = Path.GetFileNameWithoutExtension(avatarPath);
+
                 if (_scaleSyncTarget == null)
                     _scaleSyncTarget = GameObject.Find("HandTrackerRoot");
 
@@ -418,8 +419,22 @@ namespace VMCReplaceAvatar
                     //床面調整
                     if (_vrmArmature != null)
                     {
-                        var floorHeight = GetFloorHeight(_avatarModel);
-                        _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -floorHeight, _vrmArmature.transform.localPosition.z);
+                        var avatarFloorOffset = _config.avatarFloorOffsets.Find(x => x.avatarName == _avatarFileName);
+                        if (avatarFloorOffset != null)
+                        {
+                            _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, avatarFloorOffset.offset, _vrmArmature.transform.localPosition.z);
+                        }
+                        else
+                        {
+                            var floorHeight = GetFloorHeight(_avatarModel);
+                            AvatarFloorOffset avatarOffset = new AvatarFloorOffset()
+                            {
+                                avatarName = _avatarFileName,
+                                offset = floorHeight
+                            };
+                            _config.avatarFloorOffsets.Add(avatarOffset);
+                            _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -floorHeight, _vrmArmature.transform.localPosition.z);
+                        }
                     }
 
                     //VRM Mesh非表示
@@ -570,6 +585,8 @@ namespace VMCReplaceAvatar
                                 GUILayout.EndScrollView();
                             }
                         }
+                        if(_avatarFileName != null)
+                            _config.avatarFloorOffsets.Find(x => x.avatarName == _avatarFileName).offset = offset;
 
                         GUILayout.Space(10);
 
