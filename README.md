@@ -1,10 +1,16 @@
 # VMC Replace Avatar
-VRCアバターから変換して出力したアバターデータを読み込み、VRMと置き換えるVMCMod  
-BeatSaber用アバターとして使用することを想定しています。
+VRCアバターから揺れものをMagicaCloth2に変換し出力したアバターデータを読み込み、  
+VRMと置き換えるVMCMod  
+BeatSaber用アバターとして使用することを想定しています。  
   
 ## 必要なもの
 ・VirtualMotion Capture (ModはFANBOX支援版限定の機能です）  
 [https://vmc.info/](https://vmc.info/)  
+
+・基準となるVRM  
+VirtualMotionCaptureが制御するVRMからアバターの動きをもらうため、  
+基本となるVRMが１つ必要になります。  
+読み込むVRCアバターと同じ素体のVRMが必要です。  
   
 ・AvatarExporter(アバターデータ出力用)  
 [PhysicsConverter](https://github.com/Snow1226/PhysicsConverter)
