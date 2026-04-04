@@ -526,7 +526,8 @@ namespace VMCReplaceAvatar
                 {
                     Vector3[] vertices = renderer.sharedMesh?.vertices;
                     List<Vector3> worldVertices = new List<Vector3>();
-                    if (vertices != null || vertices.Length > 0)
+
+                    if (vertices != null && vertices.Length > 0)
                     {
                         foreach (var vertex in vertices)
                             worldVertices.Add(renderer.gameObject.transform.TransformPoint(vertex));
