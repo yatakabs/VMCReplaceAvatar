@@ -14,7 +14,7 @@ namespace VMCReplaceAvatar
 {
     [VMCPlugin(
     Name: "VMC Replace Avatar",
-    Version: "0.1.2",
+    Version: "0.1.3",
     Author: "snow",
     Description: "VRMを別のアバターモデルで置き換えるMod",
     AuthorURL: "https://twitter.com/snow_mil",
@@ -410,6 +410,12 @@ namespace VMCReplaceAvatar
                     _avatarRootConstraintScaleSync.IsLocal = true;
 
                     var armature = _avatarModel.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Hips).parent.gameObject.AddComponent<PositionConstraintScaleSync>();
+                    if (armature == null)
+                    {
+                        Debug.LogError("Failed to get Armature in LoadAvatar.");
+                        Destroy(_avatarModel);
+                        return;
+                    }
                     armature.TargetConstraintObject = _vrmModel.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Hips).parent.gameObject;
                     armature.TargetScaleReferenceObject = _scaleSyncTarget;
                     armature.IsLocal = true;
@@ -431,21 +437,32 @@ namespace VMCReplaceAvatar
                     //床面調整
                     if (_vrmArmature != null)
                     {
-                        var avatarFloorOffset = _config.avatarFloorOffsets.Find(x => x.avatarName == _avatarFileName);
-                        if (avatarFloorOffset != null)
+                        try
                         {
-                            _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, avatarFloorOffset.offset, _vrmArmature.transform.localPosition.z);
-                        }
-                        else
-                        {
-                            var floorHeight = GetFloorHeight(_avatarModel);
-                            AvatarFloorOffset avatarOffset = new AvatarFloorOffset()
+                            if (_config.avatarFloorOffsets == null)
+                                _config.avatarFloorOffsets = new List<AvatarFloorOffset>();
+
+                            var avatarFloorOffset = _config.avatarFloorOffsets.Find(x => x.avatarName == _avatarFileName);
+
+                            if (avatarFloorOffset != null)
+                                _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, avatarFloorOffset.offset, _vrmArmature.transform.localPosition.z);
+                            else
                             {
-                                avatarName = _avatarFileName,
-                                offset = floorHeight
-                            };
-                            _config.avatarFloorOffsets.Add(avatarOffset);
-                            _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -floorHeight, _vrmArmature.transform.localPosition.z);
+                                var floorHeight = GetFloorHeight(_avatarModel);
+                                AvatarFloorOffset avatarOffset = new AvatarFloorOffset()
+                                {
+                                    avatarName = _avatarFileName,
+                                    offset = floorHeight
+                                };
+                                _config.avatarFloorOffsets.Add(avatarOffset);
+                                _vrmArmature.transform.localPosition = new Vector3(_vrmArmature.transform.localPosition.x, -floorHeight, _vrmArmature.transform.localPosition.z);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"Floor Height Adjustment Error : {ex.Message}");
+                            Destroy(_avatarModel);
+                            return;
                         }
                     }
 
@@ -466,6 +483,12 @@ namespace VMCReplaceAvatar
 
                         foreach (var bone in _boneArray)
                         {
+                            if(bone == null)
+                            {
+                                Debug.LogWarning("Bone is null in LoadAvatar.");
+                                continue;
+                            }
+
                             if ((HumanBodyBones)bone == HumanBodyBones.LastBone)
                                 continue;
 
@@ -474,25 +497,32 @@ namespace VMCReplaceAvatar
 
                             if (poseBone != null && avatarBone != null)
                             {
-                                var initialTrans = poseBone.gameObject.GetComponent<InitialTransform>();
-                                if(initialTrans != null)
+                                try
                                 {
-                                    poseBone.position = initialTrans.initialPosition;
-                                    poseBone.rotation = initialTrans.initialRotation;
+                                    var initialTrans = poseBone.gameObject.GetComponent<InitialTransform>();
+                                    if (initialTrans != null)
+                                    {
+                                        poseBone.position = initialTrans.initialPosition;
+                                        poseBone.rotation = initialTrans.initialRotation;
 
-                                    var rot = avatarBone.gameObject.AddComponent<BoneConstraint>();
-                                    rot.sourceTransform = initialTrans;
-                                    rot.worldRotationAtRest = avatarBone.rotation;
+                                        var rot = avatarBone.gameObject.AddComponent<BoneConstraint>();
+                                        rot.sourceTransform = initialTrans;
+                                        rot.worldRotationAtRest = avatarBone.rotation;
+                                    }
+
+                                    if ((HumanBodyBones)bone == HumanBodyBones.Hips)
+                                    {
+                                        //Hips高さ合わせ
+                                        avatarBone.position = new Vector3(avatarBone.position.x, poseBone.position.y, avatarBone.position.z);
+
+                                        var pos = avatarBone.gameObject.AddComponent<PositionConstraintScaleSync>();
+                                        pos.TargetConstraintObject = poseBone.gameObject;
+                                        pos.TargetScaleReferenceObject = _scaleSyncTarget;
+                                    }
                                 }
-
-                                if ((HumanBodyBones)bone == HumanBodyBones.Hips)
+                                catch (Exception ex)
                                 {
-                                    //Hips高さ合わせ
-                                    avatarBone.position = new Vector3(avatarBone.position.x, poseBone.position.y, avatarBone.position.z);
-
-                                    var pos = avatarBone.gameObject.AddComponent<PositionConstraintScaleSync>();
-                                    pos.TargetConstraintObject = poseBone.gameObject;
-                                    pos.TargetScaleReferenceObject = _scaleSyncTarget;
+                                    Debug.LogError($"Bone Constraint Error : {bone} / {ex.Message}");
                                 }
                             }
                         }
