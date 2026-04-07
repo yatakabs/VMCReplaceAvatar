@@ -14,7 +14,7 @@ namespace VMCReplaceAvatar
 {
     [VMCPlugin(
     Name: "VMC Replace Avatar",
-    Version: "0.1.4",
+    Version: "0.1.5",
     Author: "snow",
     Description: "VRMを別のアバターモデルで置き換えるMod",
     AuthorURL: "https://twitter.com/snow_mil",
@@ -57,6 +57,9 @@ namespace VMCReplaceAvatar
         private int _port;
 
         private bool _displayUI;
+
+        private bool _debugLoad = false;
+        private bool _loadedAvatarIsDebugMode = false;
 
         private void Awake()
         {
@@ -201,7 +204,7 @@ namespace VMCReplaceAvatar
                 }
             }
 
-            if(_avatarModel != null && _vrmPose != null)
+            if(_avatarModel != null && _vrmPose != null && !_loadedAvatarIsDebugMode)
             {
                 Animator avatarAnimator = _avatarModel.GetComponent<Animator>();
                 Animator poseAnimator = _vrmPose.GetComponent<Animator>();
@@ -506,9 +509,27 @@ namespace VMCReplaceAvatar
                                         poseBone.position = initialTrans.initialPosition;
                                         poseBone.rotation = initialTrans.initialRotation;
 
-                                        var rot = avatarBone.gameObject.AddComponent<BoneConstraint>();
-                                        rot.sourceTransform = initialTrans;
-                                        rot.worldRotationAtRest = avatarBone.rotation;
+                                        if (!_debugLoad)
+                                        {
+                                            var rot = avatarBone.gameObject.AddComponent<BoneConstraint>();
+                                            rot.sourceTransform = initialTrans;
+                                            rot.worldRotationAtRest = avatarBone.rotation;
+                                            _loadedAvatarIsDebugMode = false;
+                                        }
+                                        else
+                                        {
+                                            var rot = avatarBone.gameObject.AddComponent<RotationConstraint>();
+                                            rot.weight = 1;
+                                            rot.AddSource(new ConstraintSource() { sourceTransform = poseBone, weight = 1 });
+
+                                            rot.rotationAtRest = avatarBone.localEulerAngles;
+                                            rot.rotationOffset = (Quaternion.Inverse(poseBone.rotation) * avatarBone.rotation).eulerAngles;
+                                            rot.locked = true;
+                                            rot.constraintActive = true;
+                                            rot.enabled = true;
+
+                                            _loadedAvatarIsDebugMode = true;
+                                        }
                                     }
 
                                     if ((HumanBodyBones)bone == HumanBodyBones.Hips)
@@ -580,6 +601,12 @@ namespace VMCReplaceAvatar
                         if (GUILayout.Button("\nAvatar Change\n"))
                         {
                             LoadAvatar();
+                        }
+
+                        using(new GUILayout.HorizontalScope())
+                        {
+                            GUILayout.FlexibleSpace();
+                            _debugLoad = GUILayout.Toggle(_debugLoad, "Debug Mode");
                         }
 
                         GUILayout.Space(10);
