@@ -14,7 +14,7 @@ namespace VMCReplaceAvatar
 {
     [VMCPlugin(
     Name: "VMC Replace Avatar",
-    Version: "0.1.5",
+    Version: "0.1.6",
     Author: "snow",
     Description: "VRMを別のアバターモデルで置き換えるMod",
     AuthorURL: "https://twitter.com/snow_mil",
@@ -489,6 +489,22 @@ namespace VMCReplaceAvatar
 
                     if (avatarAnimator != null && poseAnimator != null)
                     {
+                        // 一旦同期用VRMを初期ポーズに戻す
+                        foreach (var bone in _boneArray)
+                        {
+                            if ((HumanBodyBones)bone == HumanBodyBones.LastBone)
+                                continue;
+                            var poseBone = poseAnimator.GetBoneTransform((HumanBodyBones)bone);
+                            if (poseBone != null)
+                            {
+                                var initialTrans = poseBone.gameObject.GetComponent<InitialTransform>();
+                                if (initialTrans != null)
+                                {
+                                    poseBone.localPosition = initialTrans.initialPosition;
+                                    poseBone.localRotation = initialTrans.initialRotation;
+                                }
+                            }
+                        }
 
                         foreach (var bone in _boneArray)
                         {
