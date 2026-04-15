@@ -120,11 +120,13 @@ namespace VMCReplaceAvatar
                 _config = new Config();
                 File.WriteAllText(Path.Combine(dllDirectory, "VMCReplaceAvatar.json"), JsonConvert.SerializeObject(_config, Formatting.Indented));
             }
+            _config.vrmAvatarMeshSettings.RemoveAll(x => x == null);
         }
 
         private void SaveConfig()
         {
-            var avatarMeshSetting = _config.vrmAvatarMeshSettings.FindIndex(x => x.avatarName == _currentModelName);
+            if (_currentAvatarMeshSetting == null) return;
+            var avatarMeshSetting = _config.vrmAvatarMeshSettings.FindIndex(x => x != null && x.avatarName == _currentModelName);
             if (avatarMeshSetting >= 0)
                 _config.vrmAvatarMeshSettings[avatarMeshSetting] = _currentAvatarMeshSetting;
             else
@@ -145,7 +147,7 @@ namespace VMCReplaceAvatar
 
         private void SetBlendshapeSync()
         {
-            if (_vrmModel == null || _avatarModel == null) return;
+            if (_vrmModel == null || _avatarModel == null || _currentAvatarMeshSetting == null) return;
 
             _avatarModel.GetComponentsInChildren<BlendShapeSync>(true).ToList().ForEach(x => DestroyImmediate(x));
             Renderer[] newRenderers = _avatarModel.GetComponentsInChildren<SkinnedMeshRenderer>(true);
@@ -327,7 +329,7 @@ namespace VMCReplaceAvatar
                 }
             }
 
-            var avatarMeshSetting = _config.vrmAvatarMeshSettings.Find(x => x.avatarName == _currentModelName);
+            var avatarMeshSetting = _config.vrmAvatarMeshSettings.Find(x => x != null && x.avatarName == _currentModelName);
             if (avatarMeshSetting != null)
                 _currentAvatarMeshSetting = avatarMeshSetting;
             else
